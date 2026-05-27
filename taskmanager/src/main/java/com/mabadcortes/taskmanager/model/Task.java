@@ -48,8 +48,8 @@ public class Task {
      * Tittle of the task.
      * Cant be blank.
      */
-    @NotBlank(message = "Tittle is required")
-    private String tittle;
+    @NotBlank(message = "Title is required")
+    private String title;
 
     /*
      * Detailed description of the task

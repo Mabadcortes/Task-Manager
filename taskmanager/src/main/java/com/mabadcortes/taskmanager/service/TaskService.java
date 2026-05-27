@@ -51,7 +51,7 @@ public class TaskService {
     public Task updateTask(Long id, Task newTask) {
         Task task = getTaskById(id);
 
-        task.setTittle(newTask.getTittle());
+        task.setTitle(newTask.getTitle());
         task.setDescription(newTask.getDescription());
         task.setCompleted(newTask.getCompleted());
 
