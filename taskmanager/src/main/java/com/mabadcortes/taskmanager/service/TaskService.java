@@ -2,6 +2,7 @@ package com.mabadcortes.taskmanager.service;
 
 import com.mabadcortes.taskmanager.exception.TaskNotFoundException;
 import com.mabadcortes.taskmanager.model.Task;
+import com.mabadcortes.taskmanager.mapper.TaskMapper;
 import com.mabadcortes.taskmanager.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 import com.mabadcortes.taskmanager.dto.TaskRequestDTO;
@@ -16,12 +17,15 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final TaskMapper taskMapper;
 
     /*
      * Constructor injection.
      */
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, TaskMapper taskMapper) {
+
         this.taskRepository = taskRepository;
+        this.taskMapper = taskMapper;
     }
 
     /*
@@ -31,7 +35,7 @@ public class TaskService {
 
         return taskRepository.findAll()
                 .stream()
-                .map(this::mapToResponseDTO)
+                .map(taskMapper::toResponseDTO)
                 .toList();
 
     }
@@ -41,18 +45,11 @@ public class TaskService {
      */
     public TaskResponseDTO createTask(TaskRequestDTO requestDTO) {
 
-        Task task = new Task();
-
-        task.setTitle(requestDTO.getTitle());
-        task.setDescription(requestDTO.getDescription());
-        task.setCompleted(
-                requestDTO.getCompleted() != null
-                        && requestDTO.getCompleted()
-        );
+        Task task = taskMapper.toEntity(requestDTO);
 
         Task savedtask = taskRepository.save(task);
 
-        return mapToResponseDTO(savedtask);
+        return taskMapper.toResponseDTO(savedtask);
     }
 
     /*
@@ -61,10 +58,9 @@ public class TaskService {
      */
     public TaskResponseDTO getTaskById(Long id) {
 
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + id));
+        Task task = findTaskById(id);
 
-        return mapToResponseDTO(task);
+        return taskMapper.toResponseDTO(task);
     }
 
     /*
@@ -72,27 +68,20 @@ public class TaskService {
      */
     public TaskResponseDTO updateTask(Long id, TaskRequestDTO requestDTO) {
 
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + id));
+        Task existingTask = findTaskById(id);
 
+        taskMapper.updateEntityFromDTO(existingTask, requestDTO);
 
-        task.setTitle(requestDTO.getTitle());
-        task.setDescription(requestDTO.getDescription());
-        task.setCompleted(
-                requestDTO.getCompleted() != null
-                        && requestDTO.getCompleted());
+        Task updatedTask = taskRepository.save(existingTask);
 
-        Task updatedTask = taskRepository.save(task);
-
-        return mapToResponseDTO(updatedTask);
+        return taskMapper.toResponseDTO(updatedTask);
     }
 
     /*
      * Deletes a task by the id.
      */
     public void deleteTask(Long id) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + id));
+        Task task = findTaskById(id);
 
         taskRepository.delete(task);
 
@@ -109,5 +98,17 @@ public class TaskService {
                 task.getDescription(),
                 task.getCompleted()
         );
+    }
+
+    /*
+     * Finds a task by the ID.
+     */
+    private Task findTaskById(Long id) {
+        return taskRepository.findById(id)
+                .orElseThrow(() ->
+                        new TaskNotFoundException(
+                                "Task not found with id: " + id
+                        )
+                );
     }
 }
