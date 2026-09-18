@@ -4,9 +4,11 @@ import com.mabadcortes.taskmanager.exception.TaskNotFoundException;
 import com.mabadcortes.taskmanager.model.Task;
 import com.mabadcortes.taskmanager.mapper.TaskMapper;
 import com.mabadcortes.taskmanager.repository.TaskRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import com.mabadcortes.taskmanager.dto.TaskRequestDTO;
 import com.mabadcortes.taskmanager.dto.TaskResponseDTO;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -31,13 +33,17 @@ public class TaskService {
     /*
      * Returns all tasks converted to response DTOs.
      */
-    public List<TaskResponseDTO> getAllTasks() {
+    public Page<TaskResponseDTO> getAllTasks(Boolean completed, Pageable pageable) {
 
-        return taskRepository.findAll()
-                .stream()
-                .map(taskMapper::toResponseDTO)
-                .toList();
+        Page<Task> taskPage;
 
+        if (completed != null) {
+            taskPage = taskRepository.findByCompleted(completed, pageable);
+        } else {
+            taskPage = taskRepository.findAll(pageable);
+        }
+
+        return taskPage.map(taskMapper::toResponseDTO);
     }
 
     /*
